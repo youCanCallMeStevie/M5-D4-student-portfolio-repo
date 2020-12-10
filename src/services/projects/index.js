@@ -100,22 +100,25 @@ router.post(
         "YYYYMMDD"
       ),
   ],
-  (req, res, next) => {
-    //read all of project & then check id, if exisit? then create a new review & read all exisitng reviews, push new review in to array and write it back
 
+
+  async (req, res, next) => {
     try {
       const errors = validationResult(req);
       const projects = readFile("projects.json");
-      const project = projects.filter(project => project.id === req.params.id);
-
+      const project = projects.filter(project => project.projectId === req.params.id);
       if (project.length > 0 && errors.isEmpty()) {
         const newReview = {
           ...req.body,
-
         }
-        reviewsArray.push(newReview);
-        fs.writeFileSync(reviewFilePath, JSON.stringify(reviewsArray));
+        const db = await readDB(path.join(__dirname, "reviews.json"));
+
+        db.push(newReview);
+        await writeDB(path.join(__dirname, "reviews.json"), db);
+
         res.status(201).send(newReview);
+          } else {
+
           }
     } catch (error) {
       console.log(error);

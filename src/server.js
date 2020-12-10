@@ -6,6 +6,7 @@ const listEndpoints = require("express-list-endpoints")
 const studentRoutes = require("./services/students") 
 const projectsRouter = require("./services/projects")
 // const problematicRoutes = require("./services/problematicRoutes")
+const path = require("path")
 const {
   notFoundHandler,
   unauthorizedHandler,
@@ -26,6 +27,7 @@ const loggerMiddleware = (req, res, next) => {
 server.use(cors())
 server.use(express.json())
 server.use(loggerMiddleware)
+server.use(express.static(path.join(__dirname, "../public/img")))
 
 server.use("/projects", projectsRouter)
 server.use("/students", studentRoutes)

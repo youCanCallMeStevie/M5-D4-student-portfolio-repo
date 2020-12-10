@@ -2,10 +2,11 @@ const { writeJSON, readJSON } = require("fs-extra")
 
 const readDB = async filePath => {
   try {
+    console.log(filePath);
     const fileJSON = await readJSON(filePath)
     return fileJSON
   } catch (error) {
-    throw new Error(error)
+   console.log(error)
   }
 }
 
@@ -14,7 +15,7 @@ const writeDB = async (filePath, data) => {
   try {
     await writeJSON(filePath, data)
   } catch (error) {
-    throw new Error(error)
+   console.log(error)
   }
 }
 
