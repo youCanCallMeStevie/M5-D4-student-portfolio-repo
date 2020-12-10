@@ -3,13 +3,19 @@
 const express = require("express");
 const router = express.Router();
 const fs = require("fs"); //core module, file services
-const path = require("path"); //core module
-const uniqid = require("uniqid"); //third party module, it has to be installed. this will produce unique ids for us
+const path = require("path"); 
+const uniqid = require("uniqid");
+const multer = require("multer")
+const { writeFile, createReadStream } = require("fs-extra")
+
+
 const studentsFilePath = path.join(__dirname, "students.json");
 const fileAsString = fs.readFileSync(studentsFilePath).toString();
 const studentsArray = JSON.parse(fileAsString);
+const { readDB, writeDB } = require("../../lib/utilities")
+const upload = multer({})
+const studentsPhotoFilePath = path.join(__dirname, "../../../public/img/students")
 
-//functions built that can be reusable too
 
 
 //1.
@@ -67,5 +73,21 @@ router.delete("/:id", (req, res) => {
 
   res.status(200).send(newStudentsArray);
 });
+
+
+
+router.post("/uploadPhoto/:id", upload.single("avatar"), async (req, res, next) => {
+  try {
+    console.log(req.file);
+    await writeFile(
+      path.join(studentsPhotoFilePath, `${req.params.id}.jpg`),
+      req.file.buffer
+    )
+    res.send("ok")
+  } catch (error) {
+    console.log(error)
+    next(error)
+  }
+})
 
 module.exports = router;

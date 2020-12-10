@@ -1,1 +1,20 @@
-[{"name":"Stephanie","description":"lots and lots and lots of characters, I didn't think this one through. I will make it shorter next time","repoURL":"www.test.com","liveURL":"www.live.com","studentId":"4","createdAt":"2020-12-10T12:56:16.975Z","projectId":"c9lkxjklkiiuhv0w"},{"name":"Stephanie","description":"lots and lots and lots of characters, I didn't think this one through. I will make it shorter next time","repoURL":"www.test.com","liveURL":"www.live.com","studentId":"4","createdAt":"2020-12-10T12:56:38.337Z","projectId":"c9lkxjl2kiiuibib"}]
+[
+  {
+    "name": "Elliot",
+    "description": "hello woooooooorld",
+    "repoURL": "www.test.com",
+    "liveURL": "www.live.com",
+    "studentId": "6",
+    "createdAt": "2020-12-10T15:00:41.289Z",
+    "projectId": "c9lkxlg2kiiyxuiy"
+  },
+  {
+    "name": "Elliot",
+    "description": "hello woooooooorld",
+    "repoURL": "www.test.com",
+    "liveURL": "www.live.com",
+    "studentId": "6",
+    "createdAt": "2020-12-10T15:01:52.342Z",
+    "projectId": "c9lkxlgdkiiyzdcn"
+  }
+]

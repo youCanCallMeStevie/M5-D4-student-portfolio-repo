@@ -3,14 +3,26 @@ const router = express.Router();
 const fs = require("fs");
 const path = require("path");
 const uniqid = require("uniqid");
+const multer = require("multer");
+const { writeFile, createReadStream } = require("fs-extra");
+
 const { check, validationResult } = require("express-validator");
-const { S_IFDIR } = require("constants");
-const { response } = require("express");
-const { ok } = require("assert");
+const { readDB, writeDB } = require("../../lib/utilities");
+const upload = multer({});
+
+const reviewFilePath = path.join(__dirname, "reviews.json");
+const reviewAsString = fs.readFileSync(reviewFilePath).toString();
+const reviewsArray = JSON.parse(reviewAsString);
+
 
 const projectsFilePath = path.join(__dirname, "projects.json");
 const fileAsString = fs.readFileSync(projectsFilePath).toString();
 const projectsArray = JSON.parse(fileAsString);
+
+const projectsPhotoFilePath = path.join(
+  __dirname,
+  "../../../public/img/projects"
+);
 
 const readFile = fileName => {
   const buffer = fs.readFileSync(path.join(__dirname, fileName));
@@ -27,7 +39,7 @@ const readFile = fileName => {
 //   - LiveURL -> URL of the "live" project
 //   - StudentID
 
-//1. Get All
+//1. Get All PROJECTS
 router.get("/", (req, res) => {
   res.status(200).send(projectsArray);
 });
@@ -49,7 +61,71 @@ router.get("/:id", (req, res, next) => {
   }
 });
 
+//2. Get All REVIEWS for sepcific project
+router.get("/:id/reviews", (req, res) => {
+  try {
+    const projects = readFile("projects.json");
+    const project = projects.filter(project => project.id === req.params.id);
+    if (project.length > 0) {
+      res.send(project);
+    } else {
+      const err = new Error();
+      err.httpStatusCode = 404;
+      next(err);
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
+//adding a review for a specific id
+
+router.post(
+  "/:id/reviews",
+  [
+    check("name")
+      .isLength({ min: 2 })
+      .withMessage("Name must be longer than 2 letters")
+      .exists()
+      .withMessage("Insert a name please!"),
+    check("text")
+      .isLength({ min: 5 })
+      .withMessage("Description must be longer than 5 characters")
+      .exists()
+      .withMessage("What did you think of the project?"),
+    check("date")
+      .isInt()
+      .exists()
+      .withMessage(
+        "YYYYMMDD"
+      ),
+  ],
+  (req, res, next) => {
+    //read all of project & then check id, if exisit? then create a new review & read all exisitng reviews, push new review in to array and write it back
+
+    try {
+      const errors = validationResult(req);
+      const projects = readFile("projects.json");
+      const project = projects.filter(project => project.id === req.params.id);
+
+      if (project.length > 0 && errors.isEmpty()) {
+        const newReview = {
+          ...req.body,
+
+        }
+        reviewsArray.push(newReview);
+        fs.writeFileSync(reviewFilePath, JSON.stringify(reviewsArray));
+        res.status(201).send(newReview);
+          }
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
+  }
+);
+
 //add a new project
+
 router.post(
   "/",
 
@@ -58,71 +134,73 @@ router.post(
       .isLength({ min: 2 })
       .withMessage("Name must be longer than 2 letters")
       .exists()
-      .withMessage("Insert a name please!")
-      ,
+      .withMessage("Insert a name please!"),
     check("description")
-      .isLength({ min: 100 })
+      .isLength({ min: 5 })
       .withMessage("Description must be longer than 100 characters")
       .exists()
       .withMessage("Insert a description please!"),
-   
-    check('repoURL').exists()
-    .isURL()
-    .withMessage("Link to your GitHUb repo")
-    ,
-    check('liveURL').exists()
-    .isURL()
-    .withMessage("Is your site up & running? Let us check it out with a link")
-    ,
-    check('studentId').exists()      
-    .withMessage("Insert your student ID to keep all your projects together!")
+
+    check("repoURL").exists().isURL().withMessage("Link to your GitHUb repo"),
+    check("liveURL")
+      .exists()
+      .isURL()
+      .withMessage(
+        "Is your site up & running? Let us check it out with a link"
+      ),
+    check("studentId")
+      .exists()
+      .withMessage(
+        "Insert your student ID to keep all your projects together!"
+      ),
   ],
   (req, res, next) => {
-   
     try {
-    const errors = validationResult(req)
-      
+      const errors = validationResult(req);
       const buffer = fs.readFileSync(
         path.join(__dirname, "../students/students.json")
       );
       const students = JSON.parse(buffer.toString());
-  
       const exists = students.find(
         student => student.id === req.body.studentId
       );
-     
-console.log('here')
-      if (exists  && errors.isEmpty()) { //length is not the correct, as find only returns one. can do filter for an array length, or some for true or false, or every
-
-students.forEach(student=>{
-  if(student.id===exists.id){
-
-    exists.numberOfObjects= exists.numberOfObjects? exists.numberOfObjects+1:1
-  }
-})
-fs.writeFileSync( path.join(__dirname, "../students/students.json"), JSON.stringify(students))
-        const newProject = {
+      if (errors.isEmpty()) {
+        if (exists) {
+          students.forEach(student => {
+            if (student.id === exists.id) {
+              console.log(student.id);
+              exists.numberOfProjects = exists.numberOfProjects
+                ? exists.numberOfProjects + 1
+                : 1;
+            }
+          });
+          fs.writeFileSync(
+            path.join(__dirname, "../students/students.json"),
+            JSON.stringify(students)
+          );
+          const newProject = {
             ...req.body,
             createdAt: new Date(),
-            projectId: uniqid()
-         
-         };
- 
-         projectsArray.push(newProject) ;
-         fs.writeFileSync(projectsFilePath,JSON.stringify(projectsArray));
-         res.status(201).send(newProject);
-       } else {
-         console.log('here')
-        const err = new Error('student not found');
-        err.httpStatusCode = 500;
-        
-        next({... err, message:'Student not found'});
+            projectId: uniqid(),
+          };
+          projectsArray.push(newProject);
+          fs.writeFileSync(projectsFilePath, JSON.stringify(projectsArray));
+          res.status(201).send(newProject);
+        } else {
+          const newProject = {
+            ...req.body,
+            createdAt: new Date(),
+            projectId: uniqid(),
+          };
+          projectsArray.push(newProject);
+          fs.writeFileSync(projectsFilePath, JSON.stringify(projectsArray));
+          res.status(201).send(newProject);
+        }
       }
     } catch (error) {
       console.log(error);
       next(error);
     }
-    
   }
 );
 
@@ -163,5 +241,23 @@ router.put("/:id", (req, res, next) => {
     next(error);
   }
 });
+
+router.post(
+  "/uploadPhoto/:projectID",
+  upload.single("avatar"),
+  async (req, res, next) => {
+    try {
+      console.log(req.file);
+      await writeFile(
+        path.join(projectsPhotoFilePath, `${req.params.projectID}.jpg`),
+        req.file.buffer
+      );
+      res.send("ok");
+    } catch (error) {
+      console.log(error);
+      next(error);
+    }
+  }
+);
 
 module.exports = router;

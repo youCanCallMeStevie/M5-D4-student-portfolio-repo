@@ -38,7 +38,7 @@ server.use(unauthorizedHandler)
 server.use(forbiddenHandler)
 server.use(catchAllHandler)
 
-console.log(listEndpoints(server))
+// console.log(listEndpoints(server))
 
 server.listen(port, () => {
   console.log(`Server is running on port ${port}`)
